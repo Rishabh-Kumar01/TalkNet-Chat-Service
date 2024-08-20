@@ -52,6 +52,30 @@ class MessageRepository {
       throw new DatabaseError(error);
     }
   }
+
+  async findGroupMessages(groupId, limit = 50, skip = 0) {
+    try {
+      return await Message.find({ recipient: groupId, recipientType: "Group" })
+        .sort({ timestamp: -1 })
+        .limit(limit)
+        .skip(skip)
+        .populate("sender", "username");
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
+  async markAsReadForUser(messageId, userId) {
+    try {
+      return await Message.findByIdAndUpdate(
+        messageId,
+        { $addToSet: { read: userId } },
+        { new: true }
+      );
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
 }
 
 module.exports = MessageRepository;

@@ -9,4 +9,5 @@ module.exports = {
   jwt: require("jsonwebtoken"),
   mongoose: require("mongoose"),
   morgan: require("morgan"),
+  socketIo: require("socket.io"),
 };
