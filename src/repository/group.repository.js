@@ -1,5 +1,5 @@
 const { Group } = require("../model/index.model");
-const { DatabaseError } = require("../errors/custom.error");
+const { DatabaseError } = require("../error/custom.error");
 
 class GroupRepository {
   constructor() {

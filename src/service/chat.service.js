@@ -22,9 +22,9 @@ class ChatService {
     return ChatService.instance;
   }
 
-  async sendMessage(senderId, recipientId, content) {
+  async sendMessage(sender, recipient, content, recipientType) {
     try {
-      const messageData = { sender: senderId, recipient: recipientId, content };
+      const messageData = { sender, recipient, content, recipientType };
       const message = await this.messageRepository.create(messageData);
       return message;
     } catch (error) {

@@ -16,10 +16,17 @@ class MessageRepository {
     return MessageRepository.instance;
   }
 
-  async create(messageData) {
+  async create(data) {
     try {
-      const message = new Message(messageData);
-      return await message.save();
+      console.log(data);
+      const message = new Message({
+        sender: data.sender,
+        recipient: data.recipient,
+        recipientType: data.recipientType,
+        content: data.content,
+      });
+      const savedMessage = await message.save();
+      return savedMessage.toObject({ versionKey: false });
     } catch (error) {
       throw new DatabaseError(error);
     }

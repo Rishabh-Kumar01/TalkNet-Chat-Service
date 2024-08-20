@@ -10,6 +10,7 @@ const { mongoConfig, serverConfig } = require("./src/config/index.config");
 const baseError = require("./src/error/base.error");
 const SocketUtil = require("./src/utils/socket.util");
 const http = require("http");
+const routes = require("./src/route/index.route");
 
 const { PORT, CORS_ORIGIN } = serverConfig;
 
@@ -25,6 +26,11 @@ const io = new socketIo.Server(httpServer, {
 const socketUtil = SocketUtil.getInstance();
 
 const startServer = async () => {
+  app.listen(PORT || 3000, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+  mongoConfig.connect();
+
   app.use(compression());
   app.use(cors());
   app.use(helmet());
@@ -34,16 +40,13 @@ const startServer = async () => {
 
   socketUtil.initialize(io);
 
-  app.use(baseError);
-
-  app.listen(PORT || 3000, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-  mongoConfig.connect();
+  app.use("/api", routes);
 
   app.get("/", (req, res) => {
     res.send("Hello Server!!!😊😊😊😊");
   });
+
+  app.use(baseError);
 };
 
 startServer();

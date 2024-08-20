@@ -17,12 +17,13 @@ class ChatController {
 
   async sendMessage(req, res, next) {
     try {
-      const { recipientId, content } = req.body;
-      const senderId = req.user.userId;
+      const { recipient, content, recipientType } = req.body;
+      const sender = "66c262e0cbc913ffa846991c" || req.user.userId;
       const message = await this.chatService.sendMessage(
-        senderId,
-        recipientId,
-        content
+        sender,
+        recipient,
+        content,
+        recipientType
       );
       res.status(StatusCodes.CREATED).json({
         message: "Message sent successfully",
@@ -37,7 +38,7 @@ class ChatController {
   async getConversation(req, res, next) {
     try {
       const { userId } = req.params;
-      const currentUserId = req.user.userId;
+      const currentUserId = "66c262e0cbc913ffa846991c" || req.user.userId;
       const { limit, skip } = req.query;
       const messages = await this.chatService.getConversation(
         currentUserId,
