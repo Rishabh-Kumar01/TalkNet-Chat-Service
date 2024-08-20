@@ -6,6 +6,7 @@ const {
   morgan,
 } = require("./src/utils/import.util");
 const { mongoConfig, serverConfig } = require("./src/config/index.config");
+const baseError = require("./src/error/base.error");
 
 const { PORT } = serverConfig;
 
@@ -18,6 +19,8 @@ const startServer = async () => {
   app.use(morgan("dev"));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+
+  app.use(baseError);
 
   app.listen(PORT || 3000, () => {
     console.log(`Server is running on port ${PORT}`);
