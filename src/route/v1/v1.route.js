@@ -1,12 +1,13 @@
 const { express } = require("../../utils/import.util");
 const ChatController = require("../../controller/chat.controller");
+const authMiddleware = require("../../middleware/auth.middleware");
 
 const router = express.Router();
 const chatController = ChatController.getInstance();
 
 router.post("/messages", chatController.sendMessage.bind(chatController));
 router.get(
-  "/conversations/:userId",
+  "/conversations/:senderId/:recipientId",
   chatController.getConversation.bind(chatController)
 );
 router.patch(

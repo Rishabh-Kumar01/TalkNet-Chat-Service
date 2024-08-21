@@ -4,7 +4,7 @@ const {
 } = require("../repository/index.repository");
 const { ServiceError, DatabaseError } = require("../error/custom.error");
 const { responseCodes } = require("../utils/import.util");
-const SocketUtil = require("../utils/socket.util");
+const socketUtil = require("../utils/socket.util");
 
 const { StatusCodes } = responseCodes;
 
@@ -12,7 +12,6 @@ class ChatService {
   constructor() {
     this.messageRepository = MessageRepository.getInstance();
     this.groupRepository = GroupRepository.getInstance();
-    this.socketUtil = SocketUtil.getInstance();
   }
 
   static getInstance() {
@@ -22,10 +21,21 @@ class ChatService {
     return ChatService.instance;
   }
 
+  #getRoomId(user1Id, user2Id) {
+    return [user1Id, user2Id].sort().join("_");
+  }
+
   async sendMessage(sender, recipient, content, recipientType) {
     try {
       const messageData = { sender, recipient, content, recipientType };
       const message = await this.messageRepository.create(messageData);
+
+      // Notify the recipient of the new message
+      if (message) {
+        const roomId = this.#getRoomId(sender, recipient);
+        socketUtil.sendMessage(roomId, { type: "new_message", message });
+      }
+
       return message;
     } catch (error) {
       if (error instanceof DatabaseError) {
@@ -126,7 +136,7 @@ class ChatService {
       // Notify all group members
       group.members.forEach((memberId) => {
         if (memberId.toString() !== senderId.toString()) {
-          this.socketUtil.sendMessage(memberId.toString(), {
+          socketUtil.sendMessage(memberId.toString(), {
             type: "new_group_message",
             message,
           });

@@ -17,8 +17,10 @@ class ChatController {
 
   async sendMessage(req, res, next) {
     try {
-      const { recipient, content, recipientType } = req.body;
-      const sender = "66c262e0cbc913ffa846991c" || req.user.userId;
+      console.log(req.body);
+      const { sender, recipient, content } = req.body;
+      const recipientType = "User";
+      // const sender = "66c262e0cbc913ffa846991c" || req.user.userId;
       const message = await this.chatService.sendMessage(
         sender,
         recipient,
@@ -37,12 +39,11 @@ class ChatController {
 
   async getConversation(req, res, next) {
     try {
-      const { userId } = req.params;
-      const currentUserId = "66c262e0cbc913ffa846991c" || req.user.userId;
+      const { senderId, recipientId } = req.params;
       const { limit, skip } = req.query;
       const messages = await this.chatService.getConversation(
-        currentUserId,
-        userId,
+        recipientId,
+        senderId,
         limit,
         skip
       );

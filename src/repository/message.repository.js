@@ -18,7 +18,6 @@ class MessageRepository {
 
   async create(data) {
     try {
-      console.log(data);
       const message = new Message({
         sender: data.sender,
         recipient: data.recipient,

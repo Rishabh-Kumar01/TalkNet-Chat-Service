@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+
+        #message-form {
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        #message-form label {
+            margin-bottom: 5px;
+        }
+
+        #message-form input {
+            width: 30%;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        #message-form button {
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        #chat-container {
+            width: 300px;
+            height: 400px;
+            border: 1px solid #ccc;
+            overflow-y: scroll;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .message {
+            margin-bottom: 10px;
+        }
+        .sender {
+            font-weight: bold;
+        }
+
+        #sent-message-btn {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            width: 30%;
+        }
+
+        #sent-message-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            width: 30%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat app using Sockets</h1>
+    <button id="join-room">Join Room</button>
+    <form id="message-form">
+        <label for="sender-input">Sender:</label>
+        <input type="text" id="sender-input" placeholder="Your name...">
+
+        <label for="receiver-input">Receiver:</label>
+        <input type="text" id="receiver-input" placeholder="Receiver name...">
+
+        <label for="message-input">Message:</label>
+        <input type="text" id="message-input" placeholder="Type a message...">
+        <input type="hidden" id="conversation-id" value="66c4b37439d44b58e527e3e2">
+        <button type="submit" id="sent-message-btn" disabled>Submit</button>
+    </form>
+
+    <div id="chat-container"></div>
+    <div id="status"></div>
+
+    
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,82 +1,129 @@
 const { socketIo, jwt } = require("../utils/import.util");
-const { JWT_SECRET } = require("../config/server.config");
+const { JWT_SECRET, CORS_ORIGIN } = require("../config/server.config");
 const { AuthenticationError } = require("../error/custom.error");
 
-class SocketUtil {
-  constructor() {
-    this.io = null;
-    this.connectedUsers = new Map();
-  }
+const createSocketUtil = () => {
+  let io = null;
+  const userSocketMap = new Map();
 
-  static getInstance() {
-    if (!SocketUtil.instance) {
-      SocketUtil.instance = new SocketUtil();
-    }
-    return SocketUtil.instance;
-  }
-
-  initialize(server) {
-    this.io = socketIo(server);
-
-    this.io.use((socket, next) => {
-      if (socket.handshake.query && socket.handshake.query.token) {
-        jwt.verify(socket.handshake.query.token, JWT_SECRET, (err, decoded) => {
-          if (err)
-            return next(
-              new AuthenticationError("Authentication error", "Invalid token")
-            );
-          socket.decoded = decoded;
-          next();
-        });
-      } else {
-        next(
-          new AuthenticationError("Authentication error", "No token provided")
-        );
-      }
+  const initialize = (server) => {
+    io = socketIo(server, {
+      cors: {
+        origin: CORS_ORIGIN,
+        methods: ["GET", "POST"],
+        credentials: true,
+      },
     });
 
-    this.io.on("connection", (socket) => {
-      console.log("New client connected");
-      this.connectedUsers.set(socket.decoded.id, socket.id);
+    // io.use((socket, next) => {
+    //   console.log("Socket middleware executing for socket:", socket.id);
+    //   if (socket.handshake.query && socket.handshake.query.token) {
+    //     jwt.verify(socket.handshake.query.token, JWT_SECRET, (err, decoded) => {
+    //       if (err) {
+    //         console.error("JWT verification error:", err);
+    //         return next(
+    //           new AuthenticationError("Authentication error", "Invalid token")
+    //         );
+    //       }
+    //       console.log("JWT verified successfully for socket:", socket.id);
+    //       socket.decoded = decoded;
+    //       next();
+    //     });
+    //   } else {
+    //     console.log("No token provided for socket:", socket.id);
+    //     next(
+    //       new AuthenticationError("Authentication error", "No token provided")
+    //     );
+    //   }
+    // });
+
+    // io.on("connection", (socket) => {
+    //   console.log("New client connected:", socket.id);
+    //   if (socket.decoded && socket.decoded.userId) {
+    //     connectedUsers.set(socket.decoded.userId, socket.id);
+    //     console.log("User mapped:", socket.decoded.userId, "->", socket.id);
+    //   } else {
+    //     console.log("Warning: Connected socket has no decoded user ID");
+    //   }
+
+    //   socket.on("disconnect", () => {
+    //     console.log("Client disconnected:", socket.id);
+    //     if (socket.decoded && socket.decoded.userId) {
+    //       connectedUsers.delete(socket.decoded.userId);
+    //       console.log("User unmapped:", socket.decoded.userId);
+    //     }
+    //   });
+
+    //   socket.on("stop_typing", (data) => {
+    //     const recipientSocketId = connectedUsers.get(data.recipientId);
+    //     if (recipientSocketId) {
+    //       io.to(recipientSocketId).emit("user_stop_typing", {
+    //         userId: socket.decoded.userId,
+    //       });
+    //     }
+    //   });
+
+    //   socket.on("join_chat", (chatId) => {
+    //     socket.join(chatId);
+    //     console.log(`User ${socket.decoded.userId} joined chat ${chatId}`);
+    //   });
+
+    //   socket.on("leave_chat", (chatId) => {
+    //     socket.leave(chatId);
+    //     console.log(`User ${socket.decoded.userId} left chat ${chatId}`);
+    //   });
+    // });
+
+    io.on("connection", (socket) => {
+      console.log("Socket IO connected:", socket.id);
+
+      socket.on("register_user", (userId) => {
+        userSocketMap.set(userId, socket.id);
+        console.log("User registered:", userId, "->", socket.id);
+      });
+
+      socket.on("join_room", (roomId) => {
+        socket.join(roomId);
+        console.log(`Socket ${socket.id} joined room ${roomId}`);
+      });
+
+      socket.on("leave_room", (roomId) => {
+        socket.leave(roomId);
+        console.log(`Socket ${socket.id} left room ${roomId}`);
+      });
 
       socket.on("disconnect", () => {
-        console.log("Client disconnected");
-        this.connectedUsers.delete(socket.decoded.id);
-      });
-
-      socket.on("typing", (data) => {
-        const recipientSocketId = this.connectedUsers.get(data.recipientId);
-        if (recipientSocketId) {
-          this.io
-            .to(recipientSocketId)
-            .emit("user_typing", { userId: socket.decoded.id });
-        }
-      });
-
-      socket.on("stop_typing", (data) => {
-        const recipientSocketId = this.connectedUsers.get(data.recipientId);
-        if (recipientSocketId) {
-          this.io
-            .to(recipientSocketId)
-            .emit("user_stop_typing", { userId: socket.decoded.id });
+        console.log("Socket IO disconnected:", socket.id);
+        // Remove user from userSocketMap
+        for (const [userId, socketId] of userSocketMap.entries()) {
+          if (socketId === socket.id) {
+            userSocketMap.delete(userId);
+            break;
+          }
         }
       });
     });
-  }
+  };
 
-  sendMessage(recipientId, message) {
-    const recipientSocketId = this.connectedUsers.get(recipientId);
-    if (recipientSocketId) {
-      this.io.to(recipientSocketId).emit("new_message", message);
-    }
-  }
+  const sendMessage = (roomId, data) => {
+    console.log("Sending message to room:", roomId, data);
+    io.to(roomId).emit("new_message", data);
+  };
 
-  notifyGroupMessage(groupId, message, excludeUserId) {
-    this.io
-      .to(groupId)
-      .except(this.connectedUsers.get(excludeUserId))
+  const notifyGroupMessage = (groupId, message, excludeUserId) => {
+    io.to(groupId)
+      .except(connectedUsers.get(excludeUserId))
       .emit("new_group_message", message);
-  }
-}
+  };
 
-module.exports = SocketUtil;
+  return {
+    initialize,
+    sendMessage,
+    notifyGroupMessage,
+  };
+};
+
+// Create a single instance
+const socketUtil = createSocketUtil();
+
+module.exports = socketUtil;
